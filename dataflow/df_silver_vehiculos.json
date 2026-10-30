@@ -1,0 +1,88 @@
+{
+	"name": "df_silver_vehiculos",
+	"properties": {
+		"folder": {
+			"name": "silver"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "dw_bronze_vehiculos_sql",
+						"type": "DatasetReference"
+					},
+					"name": "source1"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "dw_silver_vehiculos_sql",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
+			"transformations": [
+				{
+					"name": "derivedColumn1"
+				},
+				{
+					"name": "derivedColumn2"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          AnioFuente as string,",
+				"          VehiculoId as string,",
+				"          Placa as string,",
+				"          TipoVehiculo as string,",
+				"          CapacidadEfectiva as string,",
+				"          VigenciaDesde as string,",
+				"          VigenciaHasta as string,",
+				"          Estado as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> source1",
+				"source1 derive(VehiculoId = iif(startsWith(trim(VehiculoId), 'V-'), trim(VehiculoId), concat('V-', lpad(trim(VehiculoId), 3, '0'))),",
+				"          Placa = upper(trim(Placa)),",
+				"          TipoVehiculo = upper(trim(TipoVehiculo)),",
+				"          Estado = upper(trim(Estado))) ~> derivedColumn1",
+				"derivedColumn1 derive(CapacidadEfectiva = toInteger(trim(toString(CapacidadEfectiva))),",
+				"          VigenciaDesde = iif(isNull(VigenciaDesde) || trim(toString(VigenciaDesde)) == '', toDate(null()),     iif(instr(toString(VigenciaDesde), '-') > 0,          toDate(trim(toString(VigenciaDesde)), 'yyyy-MM-dd'),         iif(instr(toString(VigenciaDesde), '/') > 0,              toDate(trim(toString(VigenciaDesde)), 'dd/MM/yyyy'),             /* Caso número de serie de Excel */             addDays(toDate('1899-12-30'), toInteger(VigenciaDesde))         )     ) ),",
+				"          VigenciaHasta = iif(isNull(VigenciaHasta) || trim(toString(VigenciaHasta)) == '', toDate(null()),     iif(instr(toString(VigenciaHasta), '-') > 0,          toDate(trim(toString(VigenciaHasta)), 'yyyy-MM-dd'),         iif(instr(toString(VigenciaHasta), '/') > 0,              toDate(trim(toString(VigenciaHasta)), 'dd/MM/yyyy'),             /* Caso número de serie de Excel */             addDays(toDate('1899-12-30'), toInteger(VigenciaHasta))         )     ) )) ~> derivedColumn2",
+				"derivedColumn2 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          VehiculoId as string,",
+				"          Placa as string,",
+				"          TipoVehiculo as string,",
+				"          CapacidadEfectiva as integer,",
+				"          VigenciaDesde as date,",
+				"          VigenciaHasta as date,",
+				"          Estado as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          VehiculoId,",
+				"          Placa,",
+				"          TipoVehiculo,",
+				"          CapacidadEfectiva,",
+				"          VigenciaDesde,",
+				"          VigenciaHasta,",
+				"          Estado",
+				"     )) ~> sink1"
+			]
+		}
+	}
+}

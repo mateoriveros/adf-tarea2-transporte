@@ -1,0 +1,97 @@
+{
+	"name": "df_silver_incidentes",
+	"properties": {
+		"folder": {
+			"name": "silver"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "dw_bronze_incidentes",
+						"type": "DatasetReference"
+					},
+					"name": "source1"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "dw_silver_incidentes_sql",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
+			"transformations": [
+				{
+					"name": "derivedColumn1"
+				},
+				{
+					"name": "derivedColumn2"
+				},
+				{
+					"name": "split1"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          AnioFuente as string,",
+				"          IncidenteId as string,",
+				"          TipoIncidente as string,",
+				"          Severidad as string,",
+				"          FechaHoraInicio as string,",
+				"          FechaHoraFin as string,",
+				"          FechaHoraRegistro as string,",
+				"          VehiculoId as string,",
+				"          Descripcion as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> source1",
+				"source1 derive(IncidenteId = upper(trim(IncidenteId)),",
+				"          TipoIncidente = upper(trim(TipoIncidente)),",
+				"          Severidad = upper(trim(Severidad)),",
+				"          VehiculoId = iif(isNull(VehiculoId) || length(trim(toString(VehiculoId))) == 0 || trim(toString(VehiculoId)) == 'null', toString(null()),     iif(startsWith(trim(toString(VehiculoId)), 'V-'), trim(toString(VehiculoId)), concat('V-', lpad(trim(toString(VehiculoId)), 3, '0'))) ),",
+				"          Descripcion = trim(Descripcion)) ~> derivedColumn1",
+				"derivedColumn1 derive(FechaHoraInicio = iif(isNull(FechaHoraInicio) || length(trim(toString(FechaHoraInicio))) == 0, toTimestamp(null()),     toTimestamp(         iif(instr(toString(FechaHoraInicio), ' ') > 0,             toString(FechaHoraInicio),             concat(                 iif(instr(toString(FechaHoraInicio), '/') > 0,                     concat(substring(toString(FechaHoraInicio), 7, 4), '-', substring(toString(FechaHoraInicio), 4, 2), '-', substring(toString(FechaHoraInicio), 1, 2)),                     toString(FechaHoraInicio)                 ),                 ' 00:00:00'             )         ),         'yyyy-MM-dd HH:mm:ss'     ) ),",
+				"          FechaHoraFin = iif(isNull(FechaHoraFin) || length(trim(toString(FechaHoraFin))) == 0, toTimestamp(null()),     toTimestamp(         iif(instr(toString(FechaHoraFin), ' ') > 0,             toString(FechaHoraFin),             concat(                 iif(instr(toString(FechaHoraFin), '/') > 0,                     concat(substring(toString(FechaHoraFin), 7, 4), '-', substring(toString(FechaHoraFin), 4, 2), '-', substring(toString(FechaHoraFin), 1, 2)),                     toString(FechaHoraFin)                 ),                 ' 00:00:00'             )         ),         'yyyy-MM-dd HH:mm:ss'     ) ),",
+				"          FechaHoraRegistro = iif(isNull(FechaHoraRegistro) || length(trim(toString(FechaHoraRegistro))) == 0, toTimestamp(null()),     toTimestamp(         iif(instr(toString(FechaHoraRegistro), ' ') > 0,             toString(FechaHoraRegistro),             concat(                 iif(instr(toString(FechaHoraRegistro), '/') > 0,                     concat(substring(toString(FechaHoraRegistro), 7, 4), '-', substring(toString(FechaHoraRegistro), 4, 2), '-', substring(toString(FechaHoraRegistro), 1, 2)),                     toString(FechaHoraRegistro)                 ),                 ' 00:00:00'             )         ),         'yyyy-MM-dd HH:mm:ss'     ) )) ~> derivedColumn2",
+				"derivedColumn2 split(isNull(IncidenteId) || length(trim(toString(IncidenteId))) == 0 || isNull(FechaHoraInicio),",
+				"     disjoint: false) ~> split1@(rechazados, validos)",
+				"split1@validos sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          IncidenteId as string,",
+				"          TipoIncidente as string,",
+				"          Severidad as string,",
+				"          FechaHoraInicio as timestamp,",
+				"          FechaHoraFin as timestamp,",
+				"          FechaHoraRegistro as timestamp,",
+				"          VehiculoId as string,",
+				"          Descripcion as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          IncidenteId,",
+				"          TipoIncidente,",
+				"          Severidad,",
+				"          FechaHoraInicio,",
+				"          FechaHoraFin,",
+				"          FechaHoraRegistro,",
+				"          VehiculoId,",
+				"          Descripcion",
+				"     )) ~> sink1"
+			]
+		}
+	}
+}
