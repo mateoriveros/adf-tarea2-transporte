@@ -33,6 +33,9 @@
 				},
 				{
 					"name": "split1"
+				},
+				{
+					"name": "aggregate1"
 				}
 			],
 			"scriptLines": [
@@ -61,7 +64,15 @@
 				"          FechaHoraRegistro = iif(isNull(FechaHoraRegistro) || length(trim(toString(FechaHoraRegistro))) == 0, toTimestamp(null()),     toTimestamp(         iif(instr(toString(FechaHoraRegistro), ' ') > 0,             toString(FechaHoraRegistro),             concat(                 iif(instr(toString(FechaHoraRegistro), '/') > 0,                     concat(substring(toString(FechaHoraRegistro), 7, 4), '-', substring(toString(FechaHoraRegistro), 4, 2), '-', substring(toString(FechaHoraRegistro), 1, 2)),                     toString(FechaHoraRegistro)                 ),                 ' 00:00:00'             )         ),         'yyyy-MM-dd HH:mm:ss'     ) )) ~> derivedColumn2",
 				"derivedColumn2 split(isNull(IncidenteId) || length(trim(toString(IncidenteId))) == 0 || isNull(FechaHoraInicio),",
 				"     disjoint: false) ~> split1@(rechazados, validos)",
-				"split1@validos sink(allowSchemaDrift: true,",
+				"split1@validos aggregate(groupBy(IncidenteId),",
+				"     TipoIncidente = first(TipoIncidente),",
+				"          Severidad = first(Severidad),",
+				"          FechaHoraInicio = first(FechaHoraInicio),",
+				"          FechaHoraFin = first(FechaHoraFin),",
+				"          FechaHoraRegistro = first(FechaHoraRegistro),",
+				"          VehiculoId = first(VehiculoId),",
+				"          Descripcion = first(Descripcion)) ~> aggregate1",
+				"aggregate1 sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     input(",
 				"          IncidenteId as string,",

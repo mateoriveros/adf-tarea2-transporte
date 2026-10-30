@@ -30,6 +30,9 @@
 				},
 				{
 					"name": "derivedColumn2"
+				},
+				{
+					"name": "aggregate1"
 				}
 			],
 			"scriptLines": [
@@ -54,7 +57,14 @@
 				"derivedColumn1 derive(CapacidadEfectiva = toInteger(trim(toString(CapacidadEfectiva))),",
 				"          VigenciaDesde = iif(isNull(VigenciaDesde) || trim(toString(VigenciaDesde)) == '', toDate(null()),     iif(instr(toString(VigenciaDesde), '-') > 0,          toDate(trim(toString(VigenciaDesde)), 'yyyy-MM-dd'),         iif(instr(toString(VigenciaDesde), '/') > 0,              toDate(trim(toString(VigenciaDesde)), 'dd/MM/yyyy'),             /* Caso número de serie de Excel */             addDays(toDate('1899-12-30'), toInteger(VigenciaDesde))         )     ) ),",
 				"          VigenciaHasta = iif(isNull(VigenciaHasta) || trim(toString(VigenciaHasta)) == '', toDate(null()),     iif(instr(toString(VigenciaHasta), '-') > 0,          toDate(trim(toString(VigenciaHasta)), 'yyyy-MM-dd'),         iif(instr(toString(VigenciaHasta), '/') > 0,              toDate(trim(toString(VigenciaHasta)), 'dd/MM/yyyy'),             /* Caso número de serie de Excel */             addDays(toDate('1899-12-30'), toInteger(VigenciaHasta))         )     ) )) ~> derivedColumn2",
-				"derivedColumn2 sink(allowSchemaDrift: true,",
+				"derivedColumn2 aggregate(groupBy(VehiculoId),",
+				"     Placa = first(Placa),",
+				"          TipoVehiculo = first(TipoVehiculo),",
+				"          CapacidadEfectiva = first(CapacidadEfectiva),",
+				"          VigenciaDesde = first(VigenciaDesde),",
+				"          VigenciaHasta = first(VigenciaHasta),",
+				"          Estado = first(Estado)) ~> aggregate1",
+				"aggregate1 sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     input(",
 				"          VehiculoId as string,",

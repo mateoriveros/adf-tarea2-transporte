@@ -30,6 +30,9 @@
 				},
 				{
 					"name": "split1"
+				},
+				{
+					"name": "aggregate1"
 				}
 			],
 			"scriptLines": [
@@ -48,7 +51,10 @@
 				"          EsPrincipal = iif(isNull(EsPrincipal), false(),      iif(toString(EsPrincipal) == '1' || lower(toString(EsPrincipal)) == 'true', true(), false()) )) ~> derivedColumn1",
 				"derivedColumn1 split(isNull(IncidenteId) || length(trim(toString(IncidenteId))) == 0 || isNull(RutaHistoricaId) || length(trim(toString(RutaHistoricaId))) == 0,",
 				"     disjoint: false) ~> split1@(rechazados, validos)",
-				"split1@validos sink(allowSchemaDrift: true,",
+				"split1@validos aggregate(groupBy(IncidenteId,",
+				"          RutaHistoricaId),",
+				"     EsPrincipal = first(EsPrincipal)) ~> aggregate1",
+				"aggregate1 sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     input(",
 				"          IncidenteId as string,",

@@ -33,6 +33,9 @@
 				},
 				{
 					"name": "split1"
+				},
+				{
+					"name": "aggregate1"
 				}
 			],
 			"scriptLines": [
@@ -61,7 +64,15 @@
 				"          VigenciaHasta = iif(isNull(VigenciaHasta) || length(trim(toString(VigenciaHasta))) == 0, toDate(null()),     iif(instr(toString(VigenciaHasta), '-') > 0,          toDate(toString(VigenciaHasta), 'yyyy-MM-dd'),         iif(instr(toString(VigenciaHasta), '/') > 0,              toDate(toString(VigenciaHasta), 'dd/MM/yyyy'),             addDays(toDate('1899-12-30'), toInteger(VigenciaHasta))         )     ) )) ~> derivedColumn2",
 				"derivedColumn2 split(isNull(RutaHistoricaId) || length(trim(toString(RutaHistoricaId))) == 0 || isNull(CodigoRuta) || isNull(VigenciaDesde),",
 				"     disjoint: false) ~> split1@(rechazados, validos)",
-				"split1@validos sink(allowSchemaDrift: true,",
+				"split1@validos aggregate(groupBy(RutaHistoricaId),",
+				"     CodigoRuta = first(CodigoRuta),",
+				"          NombreRuta = first(NombreRuta),",
+				"          Origen = first(Origen),",
+				"          Destino = first(Destino),",
+				"          VigenciaDesde = first(VigenciaDesde),",
+				"          VigenciaHasta = first(VigenciaHasta),",
+				"          Estado = first(Estado)) ~> aggregate1",
+				"aggregate1 sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     input(",
 				"          RutaHistoricaId as string,",
