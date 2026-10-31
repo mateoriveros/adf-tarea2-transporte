@@ -96,7 +96,7 @@
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
 				"     errorHandlingOption: 'allErrors',",
-				"     transactionCommit: 'Single',",
+				"     transactionCommit: 'batch',",
 				"     reportSuccessOnError: true,",
 				"     mapColumn(",
 				"          DemandaId,",
