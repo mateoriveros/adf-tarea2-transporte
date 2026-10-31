@@ -97,7 +97,7 @@
 				"     skipDuplicateMapOutputs: true,",
 				"     errorHandlingOption: 'allErrors',",
 				"     transactionCommit: 'Single',",
-				"     reportSuccessOnError: false,",
+				"     reportSuccessOnError: true,",
 				"     mapColumn(",
 				"          DemandaId,",
 				"          FechaServicio,",
